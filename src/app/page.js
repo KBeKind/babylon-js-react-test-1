@@ -6,6 +6,9 @@ import {
   HemisphericLight,
   MeshBuilder,
   SceneLoader,
+  StandardMaterial,
+  Color4,
+  VertexData,
 } from "@babylonjs/core";
 
 import * as GUI from "@babylonjs/gui/2D";
@@ -16,7 +19,7 @@ import OuterFirstPersonComponent from "./components/OuterFirstPersonComponent";
 //import "./App.css";
 
 export default function Home() {
-  let box;
+  // let box;
 
   const onSceneReady = async (scene) => {
     // This creates and positions a free camera (non-mesh)
@@ -172,17 +175,63 @@ export default function Home() {
     // GUI ABOVE
 
     // Our built-in 'ground' shape.
-    // MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
+    //MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
 
-    const { meshes } = await SceneLoader.ImportMeshAsync(
-      "",
-      "./models/",
-      "Prototype_Level.glb",
-      scene
+    // Building a box with MeshBuilder CreateBox
+    // const aBox = MeshBuilder.CreateBox(
+    //   "testBox",
+    //   { size: 1, width: 1, height: 1, depth: 1 },
+    //   scene
+    // );
+    // aBox.position.y = 5;
+    // aBox.checkCollisions = true;
+
+    //CREATE A MATERIAL FOR A MESH
+    const material = new StandardMaterial(scene);
+
+    // SET MATERIAL COLOR
+    material.diffuseColor = new Color4(0.2, 0.5, 0.5, 1);
+    // ASSIGN MATERIAL TO MESH
+    // aBox.material = material;
+
+    // MeshBuilder.CreateBox with null for scene so it isnt added to scene
+    const boxVertexData = MeshBuilder.CreateBox(
+      "testBoxCloner",
+      {
+        size: 1,
+        width: 1,
+        height: 1,
+        depth: 1,
+      },
+      null
     );
-    meshes.map((mesh) => {
-      mesh.checkCollisions = true;
-    });
+    boxVertexData.isVisible = false;
+
+    // CREATE A CLONE FROM THE box mesh
+    const boxMesh = boxVertexData.clone();
+    scene.addMesh(boxMesh);
+    for (let j = 0; j < 5; j++) {
+      for (let i = 0; i < 5; i++) {
+        const boxClone = boxVertexData.clone();
+        scene.addMesh(boxClone);
+        boxClone.position.y = 1;
+        boxClone.position.x = i + 1;
+        boxClone.position.z = j + 1;
+        boxClone.checkCollisions = true;
+        boxClone.material = material;
+        boxClone.isVisible = true;
+      }
+    }
+    // Importing a model file
+    // const { meshes } = await SceneLoader.ImportMeshAsync(
+    //   "",
+    //   "./models/",
+    //   "Prototype_Level.glb",
+    //   scene
+    // );
+    // meshes.map((mesh) => {
+    //   mesh.checkCollisions = true;
+    // });
   };
 
   return (
