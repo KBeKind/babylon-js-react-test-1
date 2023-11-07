@@ -8,7 +8,10 @@ import {
   SceneLoader,
   StandardMaterial,
   Color4,
-  VertexData,
+  Vector2,
+  OutlineRenderer,
+  Color3,
+  Matrix,
 } from "@babylonjs/core";
 
 import * as GUI from "@babylonjs/gui/2D";
@@ -195,33 +198,48 @@ export default function Home() {
     // aBox.material = material;
 
     // MeshBuilder.CreateBox with null for scene so it isnt added to scene
-    const boxVertexData = MeshBuilder.CreateBox(
-      "testBoxCloner",
-      {
-        size: 1,
-        width: 1,
-        height: 1,
-        depth: 1,
-      },
-      null
-    );
-    boxVertexData.isVisible = false;
+    // const boxVertexData = MeshBuilder.CreateBox(
+    //   "testBoxCloner",
+    //   {
+    //     size: 1,
+    //     width: 1,
+    //     height: 1,
+    //     depth: 1,
+    //   },
+    //   null
+    // );
+    // boxVertexData.isVisible = false;
+
+    //TEST
+    // Assuming you have a box mesh created like this
+    const ogBox = MeshBuilder.CreateBox("testBoxCloner", { size: 1 }, scene);
+
+    ogBox.material = material; // Assigning material to the original mesh
+    ogBox.enableEdgesRendering(); // Enable edges rendering on the original mesh
+    ogBox.edgesWidth = 4.0;
+    ogBox.edgesColor = new Color4(1, 0, 0, 1);
+    ogBox.isVisible = false;
+
+    //TEST
 
     // CREATE A CLONE FROM THE box mesh
-    const boxMesh = boxVertexData.clone();
-    scene.addMesh(boxMesh);
     for (let j = 0; j < 5; j++) {
       for (let i = 0; i < 5; i++) {
-        const boxClone = boxVertexData.clone();
-        scene.addMesh(boxClone);
+        const boxClone = ogBox.clone(`boxClone_${i}_${j}`); // Clone the mesh, not the vertex data
         boxClone.position.y = 1;
         boxClone.position.x = i + 1;
         boxClone.position.z = j + 1;
         boxClone.checkCollisions = true;
-        boxClone.material = material;
         boxClone.isVisible = true;
+        // Since we cloned after enabling edge rendering on the original mesh,
+        // the clones should also have edge rendering enabled.
+        // If you want to be explicit or have different settings for each clone, you can set them here
+        boxClone.enableEdgesRendering(); // If you need to set different parameters for edges
+
+        // Check if this is the middle box
       }
     }
+
     // Importing a model file
     // const { meshes } = await SceneLoader.ImportMeshAsync(
     //   "",
@@ -232,11 +250,168 @@ export default function Home() {
     // meshes.map((mesh) => {
     //   mesh.checkCollisions = true;
     // });
+
+    // Initialize the OutlineRenderer
+    const outline = new OutlineRenderer(scene);
+
+    // Debug: Log to see if outline renderer is initialized properly
+    console.log("OutlineRenderer initialized", outline);
+
+    // // Function to remove outline from all boxes
+    // const clearOutline = (boxes) => {
+    //   boxes.forEach((box) => {
+    //     box.renderOutline = false;
+    //   });
+    // };
+
+    // // Function to add an outline to the closest block to the camera
+    // const highlightClosestBlock = () => {
+    //   const boxes = scene.meshes.filter((mesh) =>
+    //     mesh.name.includes("testBoxCloner")
+    //   );
+    //   // Debug: Log to check if the correct meshes are being selected
+    //   console.log("Boxes found:", boxes.length);
+
+    //   let closestBox = null;
+    //   let closestDistance = Number.MAX_VALUE;
+
+    //   boxes.forEach((box) => {
+    //     const distance = Vector3.Distance(
+    //       camera.position,
+    //       box.getAbsolutePosition()
+    //     );
+    //     if (distance < closestDistance) {
+    //       closestBox = box;
+    //       closestDistance = distance;
+    //     }
+    //   });
+    //   // Debug: Log to see which box is selected as the closest
+    //   if (closestBox) {
+    //     console.log("Closest box:", closestBox.name);
+    //     clearOutline(boxes);
+    //     // For debugging, increase the outline width
+    //     closestBox.outlineWidth = 1;
+    //     // Change the outline color to a more noticeable one for debugging
+    //     closestBox.outlineColor = Color3.Green();
+    //     closestBox.renderOutline = true;
+    //   } else {
+    //     // Debug: Log if no closest box is found
+    //     console.log("No closest box found");
+    //   }
+    // };
+
+    // // Call the highlight function manually for testing
+    // highlightClosestBlock();
+
+    // // Set up an event to highlight the closest block when the scene is ready
+    // // Removed for initial manual test
+    // // scene.onReadyObservable.add(highlightClosestBlock);
+
+    // // Update the highlighted block on camera move
+    // camera.onViewMatrixChangedObservable.add(() => {
+    //   // Debug: Confirm that the camera movement is detected
+    //   console.log("Camera moved");
+    //   highlightClosestBlock();
+    // });
+
+    // ... other code remains the same
+
+    // Function to add an edge rendering to the closest block to the camera
+    const highlightClosestBlock = () => {
+      const boxes = scene.meshes.filter((mesh) =>
+        mesh.name.includes("boxClone")
+      );
+      let closestBox = null;
+      let minDistanceToCenter = Number.MAX_VALUE;
+
+      // Transform the coordinates from world space to screen space
+      const screenCenter = new Vector2(
+        scene.getEngine().getRenderWidth() / 2,
+        scene.getEngine().getRenderHeight() / 2
+      );
+
+      boxes.forEach((box) => {
+        // Project the position of the box's center onto screen space
+        const projectedPosition = Vector3.Project(
+          box.getAbsolutePosition(),
+          Matrix.Identity(),
+          scene.getTransformMatrix(),
+          camera.viewport.toGlobal(
+            scene.getEngine().getRenderWidth(),
+            scene.getEngine().getRenderHeight()
+          )
+        );
+
+        // Calculate the distance from the projected position to the center of the screen
+        const distanceToCenter = Vector2.Distance(
+          new Vector2(projectedPosition.x, projectedPosition.y),
+          screenCenter
+        );
+
+        // Check if this distance is the smallest one so far
+        if (distanceToCenter < minDistanceToCenter) {
+          closestBox = box;
+          minDistanceToCenter = distanceToCenter;
+        }
+      });
+
+      // Clear previous edge rendering
+      boxes.forEach((box) => {
+        box.edgesColor = new Color4(1, 0, 0, 1); // default red color
+        box.edgesWidth = 1.0; // default width
+      });
+
+      if (closestBox) {
+        // Change the outline of the closest box to the center of the screen
+        closestBox.edgesColor = new Color4(0, 1, 0, 1); // green color for the closest one
+        closestBox.edgesWidth = 4.0; // make it thicker
+      }
+    };
+
+    // Update the highlighted block on camera move
+    camera.onViewMatrixChangedObservable.add(highlightClosestBlock);
+
+    // Call the function once initially if needed
+    highlightClosestBlock();
+
+    // Update the highlighted block on camera move
+    camera.onViewMatrixChangedObservable.add(highlightClosestBlock);
+
+    // ... other code remains the same
+
+    //TEST BELOW
+
+    const createCrosshair = () => {
+      const crosshairSize = 20; // Size of the crosshair
+
+      // Create the vertical line
+      const verticalLine = new GUI.Line();
+      verticalLine.x1 = advancedTexture.getSize().width / 2;
+      verticalLine.y1 = (advancedTexture.getSize().height - crosshairSize) / 2;
+      verticalLine.x2 = verticalLine.x1;
+      verticalLine.y2 = (advancedTexture.getSize().height + crosshairSize) / 2;
+      verticalLine.color = "white";
+      verticalLine.lineWidth = 2;
+      advancedTexture.addControl(verticalLine);
+
+      // Create the horizontal line
+      const horizontalLine = new GUI.Line();
+      horizontalLine.x1 = (advancedTexture.getSize().width - crosshairSize) / 2;
+      horizontalLine.y1 = advancedTexture.getSize().height / 2;
+      horizontalLine.x2 = (advancedTexture.getSize().width + crosshairSize) / 2;
+      horizontalLine.y2 = horizontalLine.y1;
+      horizontalLine.color = "white";
+      horizontalLine.lineWidth = 2;
+      advancedTexture.addControl(horizontalLine);
+    };
+
+    // Call the function in the onSceneReady function
+    createCrosshair();
   };
 
   return (
     <div className="flex item-center justify-center w-full ">
-      <div id="reticle">+</div>
+      {/* <div id="reticle">+</div> */}
 
       <SceneComponent
         className="w-10/12"

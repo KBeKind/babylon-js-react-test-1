@@ -39,6 +39,7 @@ export default ({
 
     engine.runRenderLoop(() => {
       if (typeof onRender === "function") onRender(scene);
+
       scene.render();
     });
 
