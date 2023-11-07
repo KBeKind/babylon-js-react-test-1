@@ -210,7 +210,6 @@ export default function Home() {
     // );
     // boxVertexData.isVisible = false;
 
-    //TEST
     // Assuming you have a box mesh created like this
     const ogBox = MeshBuilder.CreateBox("testBoxCloner", { size: 1 }, scene);
 
@@ -235,8 +234,6 @@ export default function Home() {
         // the clones should also have edge rendering enabled.
         // If you want to be explicit or have different settings for each clone, you can set them here
         boxClone.enableEdgesRendering(); // If you need to set different parameters for edges
-
-        // Check if this is the middle box
       }
     }
 
@@ -256,65 +253,6 @@ export default function Home() {
 
     // Debug: Log to see if outline renderer is initialized properly
     console.log("OutlineRenderer initialized", outline);
-
-    // // Function to remove outline from all boxes
-    // const clearOutline = (boxes) => {
-    //   boxes.forEach((box) => {
-    //     box.renderOutline = false;
-    //   });
-    // };
-
-    // // Function to add an outline to the closest block to the camera
-    // const highlightClosestBlock = () => {
-    //   const boxes = scene.meshes.filter((mesh) =>
-    //     mesh.name.includes("testBoxCloner")
-    //   );
-    //   // Debug: Log to check if the correct meshes are being selected
-    //   console.log("Boxes found:", boxes.length);
-
-    //   let closestBox = null;
-    //   let closestDistance = Number.MAX_VALUE;
-
-    //   boxes.forEach((box) => {
-    //     const distance = Vector3.Distance(
-    //       camera.position,
-    //       box.getAbsolutePosition()
-    //     );
-    //     if (distance < closestDistance) {
-    //       closestBox = box;
-    //       closestDistance = distance;
-    //     }
-    //   });
-    //   // Debug: Log to see which box is selected as the closest
-    //   if (closestBox) {
-    //     console.log("Closest box:", closestBox.name);
-    //     clearOutline(boxes);
-    //     // For debugging, increase the outline width
-    //     closestBox.outlineWidth = 1;
-    //     // Change the outline color to a more noticeable one for debugging
-    //     closestBox.outlineColor = Color3.Green();
-    //     closestBox.renderOutline = true;
-    //   } else {
-    //     // Debug: Log if no closest box is found
-    //     console.log("No closest box found");
-    //   }
-    // };
-
-    // // Call the highlight function manually for testing
-    // highlightClosestBlock();
-
-    // // Set up an event to highlight the closest block when the scene is ready
-    // // Removed for initial manual test
-    // // scene.onReadyObservable.add(highlightClosestBlock);
-
-    // // Update the highlighted block on camera move
-    // camera.onViewMatrixChangedObservable.add(() => {
-    //   // Debug: Confirm that the camera movement is detected
-    //   console.log("Camera moved");
-    //   highlightClosestBlock();
-    // });
-
-    // ... other code remains the same
 
     // Function to add an edge rendering to the closest block to the camera
     const highlightClosestBlock = () => {
@@ -357,7 +295,7 @@ export default function Home() {
 
       // Clear previous edge rendering
       boxes.forEach((box) => {
-        box.edgesColor = new Color4(1, 0, 0, 1); // default red color
+        box.edgesColor = new Color4(1, 0, 0, 0); // default red color
         box.edgesWidth = 1.0; // default width
       });
 
@@ -377,10 +315,7 @@ export default function Home() {
     // Update the highlighted block on camera move
     camera.onViewMatrixChangedObservable.add(highlightClosestBlock);
 
-    // ... other code remains the same
-
-    //TEST BELOW
-
+    //CREATING CROSSHAIR
     const createCrosshair = () => {
       const crosshairSize = 20; // Size of the crosshair
 
